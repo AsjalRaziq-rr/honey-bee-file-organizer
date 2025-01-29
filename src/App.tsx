@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef } from 'react';
-import { FolderOpen, FileCheck, Trash2, FolderSearch, AlertCircle, Upload, Image, FileText, File, X, Maximize2, Download, Search, SlidersHorizontal, Share2, Link, Eye, Copy } from 'lucide-react';
+import { FolderOpen, FileCheck, Trash2, FolderSearch, AlertCircle, Upload, Image, FileText, File, X, Maximize2, Download, Search, SlidersHorizontal, Share2, Link, Eye, Copy, LayoutGrid, List } from 'lucide-react';
 
 // Move formatFileSize outside of App component so it can be used by all components
 const formatFileSize = (bytes: number) => {
@@ -204,6 +204,7 @@ function App() {
   const [selectedFile, setSelectedFile] = useState<FileItem | null>(null);
   const [shareFile, setShareFile] = useState<FileItem | null>(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [viewMode, setViewMode] = useState<'list' | 'honeycomb'>('list');
   const [filters, setFilters] = useState<FileFilters>({
     search: '',
     type: '',
@@ -413,6 +414,156 @@ function App() {
     });
   };
 
+  const renderFileInHoneycomb = (file: FileItem) => {
+    return (
+      <div
+        key={file.path}
+        className={`honeycomb-cell ${file.isDuplicate ? 'honeycomb-cell-duplicate' : ''}`}
+      >
+        <div className="honeycomb-content">
+          <div className="honeycomb-preview">
+            {file.type.startsWith('image/') && file.preview ? (
+              <img
+                src={file.preview}
+                alt={file.name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="flex items-center justify-center w-full h-full bg-gray-50">
+                {getFileIcon(file)}
+              </div>
+            )}
+          </div>
+          <div className="honeycomb-details">
+            <p className="font-medium text-gray-900 truncate" title={file.name}>
+              {file.name}
+            </p>
+            <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
+          </div>
+          <div className="honeycomb-actions">
+            {file.preview && (
+              <button
+                onClick={() => setSelectedFile(file)}
+                className="p-2 text-blue-600 hover:bg-blue-50 rounded-md"
+                title="Preview"
+              >
+                <Eye className="w-4 h-4" />
+              </button>
+            )}
+            <button
+              onClick={() => setShareFile(file)}
+              className="p-2 text-blue-600 hover:bg-blue-50 rounded-md"
+              title="Share"
+            >
+              <Share2 className="w-4 h-4" />
+            </button>
+            {file.isDuplicate && (
+              <button
+                onClick={() => handleRemoveDuplicate(file.path)}
+                className="p-2 text-red-600 hover:bg-red-50 rounded-md"
+                title="Remove"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+          {file.shareUrl && (
+            <div className="honeycomb-share-status">
+              <Link className="w-3 h-3" />
+            </div>
+          )}
+          {file.isDuplicate && (
+            <div className="honeycomb-duplicate-badge">
+              <AlertCircle className="w-3 h-3" />
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const renderFileList = (file: FileItem) => {
+    return (
+      <div
+        key={file.path}
+        className={`p-4 rounded-lg border ${
+          file.isDuplicate ? 'border-orange-200 bg-orange-50' : 'border-gray-200'
+        }`}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            {file.isDuplicate && (
+              <AlertCircle className="w-5 h-5 text-orange-500" />
+            )}
+            <div className="flex items-center space-x-3">
+              {file.type.startsWith('image/') && file.preview ? (
+                <img
+                  src={file.preview}
+                  alt={file.name}
+                  className="w-12 h-12 object-cover rounded"
+                />
+              ) : (
+                <div className="w-12 h-12 bg-gray-100 rounded flex items-center justify-center">
+                  {getFileIcon(file)}
+                </div>
+              )}
+              <div>
+                <p className="font-medium text-gray-900">{file.name}</p>
+                <p className="text-sm text-gray-500">{file.path}</p>
+                <div className="flex space-x-4 text-xs text-gray-400">
+                  <p>Last modified: {new Date(file.lastModified).toLocaleString()}</p>
+                  <p>Size: {formatFileSize(file.size)}</p>
+                  <p className="font-mono">Hash: {file.hash.slice(0, 8)}...</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center space-x-2">
+            {file.preview && (
+              <button
+                onClick={() => setSelectedFile(file)}
+                className="p-2 text-blue-600 hover:bg-blue-50 rounded-md"
+                title="Preview"
+              >
+                <Eye className="w-5 h-5" />
+              </button>
+            )}
+            <button
+              onClick={() => setShareFile(file)}
+              className="p-2 text-blue-600 hover:bg-blue-50 rounded-md"
+              title="Share"
+            >
+              <Share2 className="w-5 h-5" />
+            </button>
+            {file.isDuplicate && (
+              <button
+                onClick={() => handleRemoveDuplicate(file.path)}
+                className="p-2 text-red-600 hover:bg-red-50 rounded-md"
+                title="Remove"
+              >
+                <Trash2 className="w-5 h-5" />
+              </button>
+            )}
+          </div>
+        </div>
+        {file.shareUrl && (
+          <div className="mt-2 p-2 bg-gray-50 rounded-md flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <Link className="w-4 h-4" />
+              Shared
+            </div>
+            <button
+              onClick={() => setShareFile(file)}
+              className="text-sm text-blue-600 hover:underline"
+            >
+              View sharing options
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const filteredFiles = filterFiles(files);
 
   return (
@@ -512,6 +663,17 @@ function App() {
                       <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
                     </div>
                     <button
+                      onClick={() => setViewMode(viewMode === 'list' ? 'honeycomb' : 'list')}
+                      className="p-2 text-gray-600 hover:bg-gray-100 rounded-md"
+                      title={viewMode === 'list' ? 'Switch to Honeycomb View' : 'Switch to List View'}
+                    >
+                      {viewMode === 'list' ? (
+                        <LayoutGrid className="w-5 h-5" />
+                      ) : (
+                        <List className="w-5 h-5" />
+                      )}
+                    </button>
+                    <button
                       onClick={() => setShowFilters(!showFilters)}
                       className="p-2 text-gray-600 hover:bg-gray-100 rounded-md flex items-center gap-2"
                     >
@@ -571,87 +733,16 @@ function App() {
                   )}
                 </div>
 
-                <div className="space-y-4">
-                  {filteredFiles.map((file) => (
-                    <div
-                      key={file.path}
-                      className={`p-4 rounded-lg border ${
-                        file.isDuplicate ? 'border-orange-200 bg-orange-50' : 'border-gray-200'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                          {file.isDuplicate && (
-                            <AlertCircle className="w-5 h-5 text-orange-500" />
-                          )}
-                          <div className="flex items-center space-x-3">
-                            {file.type.startsWith('image/') && file.preview ? (
-                              <img
-                                src={file.preview}
-                                alt={file.name}
-                                className="w-12 h-12 object-cover rounded"
-                              />
-                            ) : (
-                              <div className="w-12 h-12 bg-gray-100 rounded flex items-center justify-center">
-                                {getFileIcon(file)}
-                              </div>
-                            )}
-                            <div>
-                              <p className="font-medium text-gray-900">{file.name}</p>
-                              <p className="text-sm text-gray-500">{file.path}</p>
-                              <div className="flex space-x-4 text-xs text-gray-400">
-                                <p>Last modified: {new Date(file.lastModified).toLocaleString()}</p>
-                                <p>Size: {formatFileSize(file.size)}</p>
-                                <p className="font-mono">Hash: {file.hash.slice(0, 8)}...</p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          {file.preview && (
-                            <button
-                              onClick={() => setSelectedFile(file)}
-                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-md"
-                              title="Preview"
-                            >
-                              <Eye className="w-5 h-5" />
-                            </button>
-                          )}
-                          <button
-                            onClick={() => setShareFile(file)}
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-md"
-                            title="Share"
-                          >
-                            <Share2 className="w-5 h-5" />
-                          </button>
-                          {file.isDuplicate && (
-                            <button
-                              onClick={() => handleRemoveDuplicate(file.path)}
-                              className="p-2 text-red-600 hover:bg-red-50 rounded-md"
-                              title="Remove"
-                            >
-                              <Trash2 className="w-5 h-5" />
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                      {file.shareUrl && (
-                        <div className="mt-2 p-2 bg-gray-50 rounded-md flex items-center justify-between">
-                          <div className="flex items-center gap-2 text-sm text-gray-600">
-                            <Link className="w-4 h-4" />
-                            Shared
-                          </div>
-                          <button
-                            onClick={() => setShareFile(file)}
-                            className="text-sm text-blue-600 hover:underline"
-                          >
-                            View sharing options
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                {viewMode === 'list' ? (
+                  <div className="space-y-4">
+                    {filteredFiles.map(renderFileList)}
+                  </div>
+                ) : (
+                  <div className="honeycomb-grid">
+                    {filteredFiles.map(renderFileInHoneycomb)}
+                  </div>
+                )}
+
                 <button
                   onClick={handleApplyChanges}
                   className="mt-6 w-full py-3 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700"
@@ -667,7 +758,7 @@ function App() {
                 <h3 className="text-xl font-semibold mb-2">Organization Complete!</h3>
                 <div className="mb-6 text-left">
                   <p className="text-gray-600 mb-4">Summary of changes:</p>
-                  <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="bg-gray-50 rounded-lg p-4"> ```
                     <p className="text-sm text-gray-600">
                       <span className="font-medium">Files kept:</span> {files.length}
                     </p>
