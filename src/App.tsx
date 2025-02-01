@@ -758,7 +758,8 @@ function App() {
                 <h3 className="text-xl font-semibold mb-2">Organization Complete!</h3>
                 <div className="mb-6 text-left">
                   <p className="text-gray-600 mb-4">Summary of changes:</p>
-                  <div className="bg-gray-50 rounded-lg p-4"> ```
+                  <div className="bg-gray-50 rounded-lg p-4">
+                 ```
                     <p className="text-sm text-gray-600">
                       <span className="font-medium">Files kept:</span> {files.length}
                     </p>
@@ -804,6 +805,30 @@ function App() {
           </div>
         </div>
       </div>
+
+      {/* Footer with Privacy Policy and Terms of Service */}
+      <footer className="bg-white border-t mt-12">
+        <div className="container mx-auto px-4 py-6">
+          <div className="flex justify-center space-x-8 text-sm text-gray-600">
+            <a 
+              href="/privacy-policy.html" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="hover:text-blue-600 transition-colors duration-200"
+            >
+              Privacy Policy
+            </a>
+            <a 
+              href="/terms-of-services.html" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="hover:text-blue-600 transition-colors duration-200"
+            >
+              Terms of Service
+            </a>
+          </div>
+        </div>
+      </footer>
 
       {selectedFile && (
         <PreviewModal
